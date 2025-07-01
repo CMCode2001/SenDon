@@ -1,19 +1,19 @@
-export type UserRole = 'donneur' | 'admin_hopital' | 'super_admin';
+export type UserRole = 'USER' | 'HOSPITAL' | 'ADMIN';
 
 export interface User {
   id: string;
   email: string;
-  nom: string;
-  prenom: string;
+  lastName: string;
+  firstName: string;
   role: UserRole;
-  telephone?: string;
-  adresse?: string;
+  phoneNumber?: string;
+  address?: string;
   position?: {
     latitude: number;
     longitude: number;
   };
-  groupeSanguin?: GroupeSanguin;
-  dateNaissance?: string;
+  bloodType?: GroupeSanguin;
+  birthDate?: string;
   dateDerniereDonation?: string;
   sexe?: 'M' | 'F';
   hopitalId?: string;

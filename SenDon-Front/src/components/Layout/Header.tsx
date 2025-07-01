@@ -22,11 +22,11 @@ export default function Header({  }: HeaderProps) {
   const getDashboardLink = () => {
     if (!user) return '/';
     switch (user.role) {
-      case 'donneur':
+      case 'USER':
         return '/donneur';
-      case 'admin_hopital':
+      case 'HOSPITAL':
         return '/hopital';
-      case 'super_admin':
+      case 'ADMIN':
         return '/admin';
       default:
         return '/';
@@ -34,7 +34,7 @@ export default function Header({  }: HeaderProps) {
   };
 
   return (
-    <header className="bg-black shadow-md sticky top-0 z-50">
+    <header className="bg-black shadow-md  top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo à gauche */}
@@ -79,16 +79,17 @@ export default function Header({  }: HeaderProps) {
                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                       <User className="h-4 w-4 text-primary-600" />
                     </div>
-                    <span className="font-medium hidden md:block">
-                      {user.prenom} {user.nom}
+                    <span className="font-medium hidden md:block text-white">
+                      {user.firstName} {user.lastName}
                     </span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                    title="Se déconnecter"
+                    className="p-2 text-gray-600 hover:text-white hover:bg-red-600 rounded-full transition-colors"
+                    // title="Se déconnecter"
                   >
-                    <LogOut className="h-4 w-4" />
+                     
+                    <LogOut className="h-4 w-4 text-white" />
                   </button>
                 </div>
               </>

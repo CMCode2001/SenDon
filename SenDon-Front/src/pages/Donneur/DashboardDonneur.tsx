@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin, Bell, Heart, Users, Calendar, Plus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import StatsCard from '../../components/UI/StatsCard';
@@ -8,12 +8,13 @@ import { mockDemandes } from '../../data/mockData';
 
 export default function DashboardDonneur() {
   const { user } = useAuth();
-  
+
   // Filter active demands compatible with user's blood type
   const demandesCompatibles = mockDemandes.filter(d => 
     d.statut === 'active' && 
-    (d.groupeSanguin === user?.groupeSanguin || d.groupeSanguin === 'O-')
-  );
+    (d.groupeSanguin === user?.bloodType || d.groupeSanguin === 'O-')
+);
+
 
   const mesDerniersDons = [
     {
@@ -32,6 +33,57 @@ export default function DashboardDonneur() {
     }
   ];
 
+  // État pour le modal et le formulaire
+  const [showModal, setShowModal] = useState(false);
+  const [procheForm, setProcheForm] = useState({
+    nom: '',
+    prenom: '',
+    telephone: '',
+    type: 'famille',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setProcheForm({ ...procheForm, [e.target.name]: e.target.value });
+  };
+
+  // Liste des proches (état local)
+  const [proches, setProches] = useState([
+    {
+      nom: 'Maman',
+      prenom: 'Awa',
+      telephone: '+221 77 888 9999',
+      type: 'Mère',
+      groupeSanguin: 'B+',
+    },
+    {
+      nom: 'Ibrahim',
+      prenom: '',
+      telephone: '+221 76 555 4444',
+      type: 'Frère',
+      groupeSanguin: 'O+',
+    },
+  ]);
+
+  // Modal de gestion des proches
+  const [showGestionModal, setShowGestionModal] = useState(false);
+
+  const handleAddProche = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Ajoute le proche à la liste
+    setProches([
+      ...proches,
+      {
+        nom: procheForm.nom,
+        prenom: procheForm.prenom,
+        telephone: procheForm.telephone,
+        type: procheForm.type === 'famille' ? 'Famille' : 'Ami',
+        groupeSanguin: '', // À compléter si tu ajoutes ce champ au formulaire
+      },
+    ]);
+    setShowModal(false);
+    setProcheForm({ nom: '', prenom: '', telephone: '', type: 'famille' });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -41,16 +93,17 @@ export default function DashboardDonneur() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">
-                  Bonjour {user?.prenom} ! 👋
+                  Bonjour {user?.firstName} ! 👋
                 </h1>
                 <p className="text-lg opacity-90">
                   Votre prochaine donation sera possible dans 12 semaines
                 </p>
                 <div className="flex items-center space-x-4 mt-4">
                   <BloodTypeIndicator 
-                    type={user?.groupeSanguin || 'O+'} 
+                    type={user?.bloodType || 'O+'} 
                     size="lg"
                   />
+
                   <div className="text-sm opacity-90">
                     <div>Dernière donation : 10 Jan 2024</div>
                     <div>Total de vies sauvées : 9 personnes</div>
@@ -185,30 +238,35 @@ export default function DashboardDonneur() {
                 <h2 className="text-xl font-bold text-gray-900">
                   Mes Proches
                 </h2>
-                <button className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
+                <button
+                  className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                  onClick={() => setShowModal(true)}
+                  aria-label="Ajouter un proche"
+                >
                   <Plus className="h-5 w-5" />
                 </button>
               </div>
-              
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">Maman Awa</h3>
-                    <BloodTypeIndicator type="B+" size="sm" />
+                {proches.map((proche, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-gray-900">
+                        {proche.nom} {proche.prenom}
+                      </h3>
+                      {proche.groupeSanguin && (
+                        <BloodTypeIndicator type={proche.groupeSanguin} size="sm" />
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {proche.type} - {proche.telephone}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-600">Mère - +221 77 888 9999</p>
-                </div>
-                
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">Ibrahim</h3>
-                    <BloodTypeIndicator type="O+" size="sm" />
-                  </div>
-                  <p className="text-sm text-gray-600">Frère - +221 76 555 4444</p>
-                </div>
+                ))}
               </div>
-              
-              <button className="w-full mt-4 py-2 px-4 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors font-medium">
+              <button
+                className="w-full mt-4 py-2 px-4 border border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors font-medium"
+                onClick={() => setShowGestionModal(true)}
+              >
                 Gérer mes proches
               </button>
             </div>
@@ -227,37 +285,132 @@ export default function DashboardDonneur() {
                 </button>
               </div>
             </div>
-
-            {/* Impact */}
-            <div className="bg-gradient-to-br from-secondary-50 to-accent-50 rounded-2xl p-6 border border-secondary-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Votre Impact 🎯
-              </h2>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Vies sauvées</span>
-                  <span className="font-bold text-secondary-600">9 personnes</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Familles aidées</span>
-                  <span className="font-bold text-secondary-600">3 familles</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Rang communautaire</span>
-                  <span className="font-bold text-accent-600">#127 / 1247</span>
-                </div>
-              </div>
-              
-              <div className="mt-4 p-3 bg-white bg-opacity-50 rounded-lg text-center">
-                <p className="text-sm text-gray-700">
-                  <strong>Prochain objectif :</strong> 5 dons pour débloquer le badge "Héros Local" 🏆
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Modal d'ajout de proche */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowModal(false)}
+              aria-label="Fermer"
+            >
+              ×
+            </button>
+            <h3 className="text-lg font-bold mb-4 text-gray-900">Ajouter un proche</h3>
+            <form onSubmit={handleAddProche} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <input
+                  type="text"
+                  name="nom"
+                  value={procheForm.nom}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                <input
+                  type="text"
+                  name="prenom"
+                  value={procheForm.prenom}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de téléphone</label>
+                <input
+                  type="tel"
+                  name="telephone"
+                  value={procheForm.telephone}
+                  onChange={handleChange}
+                  required
+                  className="w-full border rounded-lg px-3 py-2"
+                  placeholder="+221 77 000 0000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type de proche</label>
+                <select
+                  name="type"
+                  value={procheForm.type}
+                  onChange={handleChange}
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="famille">Membre de famille</option>
+                  <option value="ami">Ami</option>
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                >
+                  Ajouter
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de gestion des proches */}
+      {showGestionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl p-6 relative">
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+              onClick={() => setShowGestionModal(false)}
+              aria-label="Fermer"
+            >
+              ×
+            </button>
+            <h3 className="text-xl font-bold mb-6 text-gray-900 text-center">Liste de mes proches</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Nom</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Prénom</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Téléphone</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Type</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Groupe sanguin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proches.map((proche, idx) => (
+                    <tr
+                      key={idx}
+                      className="hover:bg-primary-50 transition-colors border-b border-gray-100"
+                    >
+                      <td className="px-4 py-2">{proche.nom}</td>
+                      <td className="px-4 py-2">{proche.prenom}</td>
+                      <td className="px-4 py-2">{proche.telephone}</td>
+                      <td className="px-4 py-2">{proche.type}</td>
+                      <td className="px-4 py-2">{proche.groupeSanguin || <span className="text-gray-400">-</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                onClick={() => setShowGestionModal(false)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
