@@ -41,12 +41,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
                 break;
             case HOSPITAL:
+                // HOSPITAL a tous les privilèges (ADMIN + HOSPITAL + USER)
                 authorities.add(new SimpleGrantedAuthority("ROLE_HOSPITAL"));
-                break;
-            case ADMIN:
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_HOSPITAL"));
                 break;
         }
         

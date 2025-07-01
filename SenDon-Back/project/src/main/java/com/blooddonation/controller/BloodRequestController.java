@@ -2,8 +2,6 @@ package com.blooddonation.controller;
 
 import com.blooddonation.dto.BloodRequestDto;
 import com.blooddonation.dto.BloodRequestResponseDto;
-import com.blooddonation.enums.BloodType;
-import com.blooddonation.enums.UrgencyLevel;
 import com.blooddonation.service.BloodRequestService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -23,7 +20,7 @@ public class BloodRequestController {
     @Autowired
     private BloodRequestService bloodRequestService;
     
-    // Endpoints pour les hôpitaux
+    // Endpoints pour les hôpitaux/admins
     @PostMapping("/hospital/{hospitalUserId}")
     @PreAuthorize("hasRole('HOSPITAL')")
     public ResponseEntity<BloodRequestResponseDto> createBloodRequest(
@@ -84,7 +81,7 @@ public class BloodRequestController {
         return ResponseEntity.noContent().build();
     }
     
-    // Endpoints pour les donneurs
+    // Endpoints pour les donneurs - ACCÈS SIMPLIFIÉ
     @GetMapping("/active")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<BloodRequestResponseDto>> getAllActiveBloodRequests() {
@@ -92,29 +89,38 @@ public class BloodRequestController {
         return ResponseEntity.ok(requests);
     }
     
-    @GetMapping("/nearby")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<BloodRequestResponseDto>> getNearbyBloodRequests(
-            @RequestParam BigDecimal latitude,
-            @RequestParam BigDecimal longitude,
-            @RequestParam BloodType bloodType) {
-        List<BloodRequestResponseDto> requests = bloodRequestService.getNearbyBloodRequests(latitude, longitude, bloodType);
-        return ResponseEntity.ok(requests);
-    }
-    
-    @GetMapping("/blood-type/{bloodType}")
-    @PreAuthorize("hasRole('USER')")
+    // Endpoints pour les hôpitaux/admins - RECHERCHE ET FILTRAGE
+    @GetMapping("/search/blood-type/{bloodType}")
+    @PreAuthorize("hasRole('HOSPITAL')")
     public ResponseEntity<List<BloodRequestResponseDto>> getBloodRequestsByBloodType(
-            @PathVariable BloodType bloodType) {
+            @PathVariable com.blooddonation.enums.BloodType bloodType) {
         List<BloodRequestResponseDto> requests = bloodRequestService.getBloodRequestsByBloodType(bloodType);
         return ResponseEntity.ok(requests);
     }
     
-    @GetMapping("/urgency/{urgencyLevel}")
-    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/search/urgency/{urgencyLevel}")
+    @PreAuthorize("hasRole('HOSPITAL')")
     public ResponseEntity<List<BloodRequestResponseDto>> getBloodRequestsByUrgencyLevel(
-            @PathVariable UrgencyLevel urgencyLevel) {
+            @PathVariable com.blooddonation.enums.UrgencyLevel urgencyLevel) {
         List<BloodRequestResponseDto> requests = bloodRequestService.getBloodRequestsByUrgencyLevel(urgencyLevel);
+        return ResponseEntity.ok(requests);
+    }
+    
+    @GetMapping("/search/nearby")
+    @PreAuthorize("hasRole('HOSPITAL')")
+    public ResponseEntity<List<BloodRequestResponseDto>> getNearbyBloodRequests(
+            @RequestParam java.math.BigDecimal latitude,
+            @RequestParam java.math.BigDecimal longitude,
+            @RequestParam com.blooddonation.enums.BloodType bloodType) {
+        List<BloodRequestResponseDto> requests = bloodRequestService.getNearbyBloodRequests(latitude, longitude, bloodType);
+        return ResponseEntity.ok(requests);
+    }
+    
+    // Endpoint pour voir toutes les demandes (pour les hôpitaux/admins)
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('HOSPITAL')")
+    public ResponseEntity<List<BloodRequestResponseDto>> getAllBloodRequests() {
+        List<BloodRequestResponseDto> requests = bloodRequestService.getAllBloodRequests();
         return ResponseEntity.ok(requests);
     }
 }

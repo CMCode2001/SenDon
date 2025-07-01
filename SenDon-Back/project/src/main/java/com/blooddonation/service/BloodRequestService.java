@@ -197,6 +197,19 @@ public class BloodRequestService {
             throw new RuntimeException("Erreur lors de la complétion de la demande: " + e.getMessage(), e);
         }
     }
+
+    public List<BloodRequestResponseDto> getAllBloodRequests() {
+        try {
+            List<BloodRequest> requests = bloodRequestRepository.findAll();
+            return requests.stream()
+                    .map(bloodRequestMapper::toResponseDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Erreur lors de la récupération de toutes les demandes de sang", e);
+            throw new RuntimeException("Erreur lors de la récupération de toutes les demandes de sang: " + e.getMessage(), e);
+        }
+    }
+    
     
     // Méthodes pour les donneurs
     public List<BloodRequestResponseDto> getAllActiveBloodRequests() {
