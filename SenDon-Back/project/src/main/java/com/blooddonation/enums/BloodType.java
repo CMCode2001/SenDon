@@ -1,5 +1,8 @@
 package com.blooddonation.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum BloodType {
     A_POSITIVE("A+"),
     A_NEGATIVE("A-"),
@@ -16,7 +19,18 @@ public enum BloodType {
         this.displayName = displayName;
     }
 
+    @JsonValue
     public String getDisplayName() {
         return displayName;
+    }
+
+    @JsonCreator
+    public static BloodType fromDisplayName(String value) {
+        for (BloodType type : BloodType.values()) {
+            if (type.displayName.equalsIgnoreCase(value)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Invalid blood type: " + value);
     }
 }

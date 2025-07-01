@@ -601,6 +601,7 @@ export default function Centres() {
             )}
 
             {/* All Centers List */}
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {matchedHopitaux.map((hopital) => (
                 <div key={hopital.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
@@ -673,9 +674,9 @@ export default function Centres() {
                     
                     <a
                       href={`tel:${hopital.telephone}`}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center justify-center"
+                      className="flex-1 bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black transition-colors flex items-center justify-center"
                     >
-                      <Phone className="h-4 w-4 mr-2" />
+                      <Phone className="h-4 w-4 mr-2 text-white" />
                       Appeler
                     </a>
                   </div>

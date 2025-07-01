@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import {  Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import LogoSenDon from '../../assets/img/Logo SenDon.png';
+import { connexion } from '../../api/connexion';
+
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -11,65 +14,51 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { login } = useAuth();
+
   const navigate = useNavigate();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const success = await login(formData.email, formData.password);
-      if (success) {
-        navigate('/donneur'); // Will be redirected based on role
-      } else {
-        setError('Email ou mot de passe incorrect');
-      }
-    } catch (err) {
-      setError('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
+const { setUserFromOutside } = useAuth(); // ✅ récupérer la méthode exposée
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
+
+  try {
+    const { token, user } = await connexion(formData.email, formData.password);
+
+    // 🔁 Synchroniser le contexte après connexion
+    setUserFromOutside(user);
+
+    setIsLoading(false);
+    navigate('/dashboard');
+  } catch (err) {
+    console.error(err);
+    setError("Email ou mot de passe incorrect");
+    setIsLoading(false);
+  }
+};
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
-        <div className="text-center">
-          <Link to="/" className="inline-flex items-center space-x-2 group mb-8">
-            <Heart className="h-10 w-10 text-primary-600 group-hover:scale-110 transition-transform duration-200" />
+         <div className="text-center"> 
+          {/* <Link to="/" className="inline-flex items-center space-x-2 group mb-8">
+            <img src={LogoSenDon} alt="Logo SenDon" className="w-8 h-12" />
             <div>
               <span className="text-2xl font-bold text-gray-900">Sen</span>
               <span className="text-2xl font-bold text-primary-600">Don</span>
             </div>
-          </Link>
-          
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Bon retour !
-          </h2>
-          <p className="text-gray-600">
-            Connectez-vous pour accéder à votre espace personnel
-          </p>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-          <h3 className="font-semibold text-blue-900 mb-2">Comptes de démonstration :</h3>
-          <div className="space-y-1 text-blue-800">
-            <div><strong>Donneur :</strong> fatou.sarr@gmail.com / password</div>
-            <div><strong>Hôpital :</strong> admin@hopital-dakar.sn / password</div>
-            <div><strong>Admin :</strong> superadmin@sendon.sn / password</div>
-          </div>
+          </Link>  */}
+          <h2 className="text-4xl font-bold text-red-600 mb-2">Bon retour !</h2>
+          <p className="text-gray-600">Connectez-vous pour accéder à votre espace personnel</p>
         </div>
 
         {/* Form */}
@@ -80,7 +69,7 @@ export default function Login() {
               <span className="text-sm">{error}</span>
             </div>
           )}
-          
+
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">

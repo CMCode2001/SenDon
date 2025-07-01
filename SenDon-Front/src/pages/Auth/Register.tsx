@@ -4,6 +4,8 @@ import { Heart, Eye, EyeOff, User, Mail, Lock, Phone, MapPin, Calendar, AlertCir
 import { useAuth } from '../../contexts/AuthContext';
 import { GroupeSanguin } from '../../types';
 import BloodTypeIndicator from '../../components/UI/BloodTypeIndicator';
+import LogoSenDon from '../../assets/img/Logo SenDon.png';
+import { registerUser } from '../../api/inscription';
 
 interface LocationState {
   loading: boolean;
@@ -355,65 +357,33 @@ export default function Register() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
+  // Validation manuelle si besoin
+  if (formData.password !== formData.confirmPassword) {
+    setError("Les mots de passe ne correspondent pas.");
+    return;
+  }
 
-    if (formData.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
-      return;
-    }
-
-    if (!formData.groupeSanguin) {
-      setError('Veuillez sélectionner votre groupe sanguin');
-      return;
-    }
-
-    if (!formData.adresse.trim()) {
-      setError('L\'adresse est obligatoire. Veuillez activer la géolocalisation ou saisir votre adresse manuellement.');
-      return;
-    }
-
-    // Validation de la date de dernière donation
-    if (formData.dateDerniereDonation) {
-      const lastDonationDate = new Date(formData.dateDerniereDonation);
-      const today = new Date();
-      
-      if (lastDonationDate > today) {
-        setError('La date de dernière donation ne peut pas être dans le futur');
-        return;
-      }
-    }
-
+  try {
     setIsLoading(true);
+    setError("");
 
-    try {
-      const userData = {
-        ...formData,
-        role: 'donneur' as const,
-        position: locationState.coordinates || undefined,
-      };
-      
-      console.log('📝 Données utilisateur à enregistrer:', userData);
-      
-      const success = await register(userData);
-      if (success) {
-        navigate('/donneur');
-      } else {
-        setError('Une erreur est survenue lors de l\'inscription');
-      }
-    } catch (err) {
-      setError('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const response = await registerUser(formData);
+    
+    console.log('Utilisateur inscrit avec succès :', response);
+    // Redirection ou message de succès
+    navigate("/connexion"); // ou toute autre action
+
+  } catch (err: any) {
+    console.error("Erreur lors de l'inscription :", err);
+    setError(err.response?.data?.message || "Une erreur s'est produite.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -468,7 +438,7 @@ export default function Register() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-2 group mb-8">
-            <Heart className="h-10 w-10 text-primary-600 group-hover:scale-110 transition-transform duration-200" />
+           <img src={LogoSenDon} alt="Logo SenDon" className="w-8 h-12"/>
             <div>
               <span className="text-2xl font-bold text-gray-900">Sen</span>
               <span className="text-2xl font-bold text-primary-600">Don</span>

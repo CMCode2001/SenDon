@@ -1,108 +1,91 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, UserRole } from '../types';
+import axios from 'axios';
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (userData: Omit<User, 'id' | 'isActive'>) => Promise<boolean>;
+  register: (data: any) => Promise<boolean>;
   isLoading: boolean;
+  setUserFromOutside: (user: User) => void; // ✅ AJOUTÉ
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'admin@hopital-dakar.sn',
-    nom: 'Diallo',
-    prenom: 'Amadou',
-    role: 'admin_hopital',
-    telephone: '+221771234567',
-    hopitalId: 'hopital-1',
-    isActive: true,
-  },
-  {
-    id: '2',
-    email: 'fatou.sarr@gmail.com',
-    nom: 'Sarr',
-    prenom: 'Fatou',
-    role: 'donneur',
-    telephone: '+221776543210',
-    groupeSanguin: 'O+',
-    dateNaissance: '1990-05-15',
-    dateDerniereDonation: '2024-01-10',
-    sexe: 'F',
-    adresse: 'Plateau, Dakar, Sénégal',
-    position: { latitude: 14.6928, longitude: -17.4467 },
-    isActive: true,
-  },
-  {
-    id: '3',
-    email: 'superadmin@sendon.sn',
-    nom: 'Ndiaye',
-    prenom: 'Moussa',
-    role: 'super_admin',
-    telephone: '+221778888888',
-    isActive: true,
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const setUserFromOutside = (userData: User) => {
+  setUser(userData);
+};
+
 
   useEffect(() => {
-    // Check for stored user session
+    const storedToken = localStorage.getItem('sendon_token');
     const storedUser = localStorage.getItem('sendon_user');
-    if (storedUser) {
+
+    if (storedToken && storedUser) {
       setUser(JSON.parse(storedUser));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
+
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Mock authentication
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === 'password') {
-      setUser(foundUser);
-      localStorage.setItem('sendon_user', JSON.stringify(foundUser));
-      setIsLoading(false);
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
+        email,
+        password
+      });
+
+      const { token, user: userData } = response.data;
+
+      localStorage.setItem('sendon_token', token);
+      localStorage.setItem('sendon_user', JSON.stringify(userData));
+
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(userData);
       return true;
+    } catch (error) {
+      console.error('Login failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
-  const register = async (userData: Omit<User, 'id' | 'isActive'>): Promise<boolean> => {
+  const register = async (userData: any): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Mock registration
-    const newUser: User = {
-      ...userData,
-      id: `user_${Date.now()}`,
-      isActive: true,
-    };
-    
-    mockUsers.push(newUser);
-    setUser(newUser);
-    localStorage.setItem('sendon_user', JSON.stringify(newUser));
-    setIsLoading(false);
-    return true;
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, userData);
+      const { token, user: createdUser } = response.data;
+
+      localStorage.setItem('sendon_token', token);
+      localStorage.setItem('sendon_user', JSON.stringify(createdUser));
+
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(createdUser);
+      return true;
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('sendon_token');
     localStorage.removeItem('sendon_user');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isLoading , setUserFromOutside }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

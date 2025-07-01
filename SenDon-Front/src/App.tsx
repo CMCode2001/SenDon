@@ -12,10 +12,10 @@ import Centres from './pages/Centres';
 import DashboardDonneur from './pages/Donneur/DashboardDonneur';
 import DashboardHopital from './pages/Hopital/DashboardHopital';
 
-// Protected Route Component
+// 🔒 Route protégée
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
   const { user, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -23,83 +23,86 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/connexion" replace />;
   }
-  
+
   if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
-// Layout Component
+// 🧱 Layout global avec Header et Footer
 function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
       {!user && <Footer />}
     </div>
   );
 }
 
-// Dashboard Router
+// 📍 Redirection automatique vers bon dashboard
 function DashboardRouter() {
   const { user } = useAuth();
-  
+
   if (!user) return <Navigate to="/connexion" replace />;
-  
+
   switch (user.role) {
-    case 'donneur':
-      return <DashboardDonneur />;
-    case 'admin_hopital':
-      return <DashboardHopital />;
-    case 'super_admin':
-      return <div>Super Admin Dashboard (Coming Soon)</div>;
+    case 'USER':
+      return <Navigate to="/donneur" replace />;
+    case 'HOSPITAL':
+      return <Navigate to="/hopital" replace />;
+    case 'ADMIN':
+      return <Navigate to="/admin" replace />;
     default:
       return <Navigate to="/" replace />;
   }
 }
 
+// 🌐 Routes de l'application
 function AppContent() {
   return (
     <Router>
       <Layout>
         <Routes>
-          {/* Public Routes */}
+          {/* 🌍 Public */}
           <Route path="/" element={<Landing />} />
           <Route path="/connexion" element={<Login />} />
           <Route path="/inscription" element={<Register />} />
           <Route path="/centres" element={<Centres />} />
-          
-          {/* Protected Routes */}
-          <Route 
-            path="/donneur" 
+
+          {/* 🔐 Privé : USER */}
+          <Route
+            path="/donneur"
             element={
-              <ProtectedRoute allowedRoles={['donneur']}>
+              <ProtectedRoute allowedRoles={['USER']}>
                 <DashboardDonneur />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/hopital" 
+
+          {/* 🔐 Privé : HOSPITAL */}
+          <Route
+            path="/hopital"
             element={
-              <ProtectedRoute allowedRoles={['admin_hopital']}>
+              <ProtectedRoute allowedRoles={['HOSPITAL']}>
                 <DashboardHopital />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/admin" 
+
+          {/* 🔐 Privé : ADMIN */}
+          <Route
+            path="/admin"
             element={
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['ADMIN']}>
                 <div className="min-h-screen flex items-center justify-center">
                   <div className="text-center">
                     <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -109,13 +112,13 @@ function AppContent() {
                   </div>
                 </div>
               </ProtectedRoute>
-            } 
+            }
           />
-          
-          {/* Redirect based on user role */}
+
+          {/* 🧭 Redirection dynamique après connexion */}
           <Route path="/dashboard" element={<DashboardRouter />} />
-          
-          {/* Catch all route */}
+
+          {/* 🧱 Catch All */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>
@@ -123,6 +126,7 @@ function AppContent() {
   );
 }
 
+// 🔁 Fournisseur global d'authentification
 function App() {
   return (
     <AuthProvider>
